@@ -10,5 +10,4 @@ To start a local development server, run:
 ng serve
 ```
 
-```
 
