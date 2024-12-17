@@ -1,0 +1,467 @@
+<%@page import="java.text.SimpleDateFormat"%>
+<%@page import="java.text.DecimalFormat"%>
+<%@page import="java.text.DecimalFormatSymbols"%>
+
+<g:set var="parametrosService" bean="parametrosService"></g:set>
+<g:set var="bucket" value="${parametrosService.getParametro(7l)}"></g:set>
+<div class="card">
+  <div id="cardPdf">
+	<div class="card-header">
+		<div class="col-sm-12">
+			<div class="form-group row margin-bottom-none">
+				<div class="col-md-6 col-sm-6 col-xs-12">
+					<b>Resultado ADI Jogador</b>
+				</div>
+				<div class="col-md-6 col-sm-6 col-xs-12 d-flex flex-row-reverse">
+					<button type="reset" class="btn btn-mat btn-primary mb-3 text-right" name="btnVoltar" onclick="cancelar();">Voltar</button>
+				</div>
+			</div>
+			<h4 class="sub-title"></h4>
+		</div>
+	</div>
+
+	<div class="card-block">
+		<form class="form-horizontal form-label-left">
+			<div class="form-group row">
+				<div class="col-md-4 col-sm-4 col-xs-12 form-group">
+					<label class="control-label" for="jogador">Jogador</label> 
+					<input type="text" id="jogador" class="form-control" readonly="readonly" value="${avaliacao.jogador.nome}">
+				</div>
+				
+				<div class="col-md-4 col-sm-4 col-xs-12 form-group">
+					<label class="control-label" for="tipoJogador">Função do Jogador</label> 
+					<input type="text" id="tipoJogador" class="form-control" readonly="readonly" value="${tipoJogador.nome}">
+				</div>
+				
+				<div class="col-md-4 col-sm-4 col-xs-12 form-group">
+					<label class="control-label" for="time">Time</label> 
+					<input type="text" id="time" class="form-control" readonly="readonly" value="${avaliacao.unidadeNegocio.fantasia}">
+				</div>
+			</div>
+			
+			<div class="form-group row">
+				<div class="col-md-4 col-sm-4 col-xs-12 form-group">
+					<label class="control-label" for="turno">Turno</label> 
+					<input type="text" id="turno" class="form-control" readonly="readonly" value="${avaliacao.turno.nome}">
+				</div>
+
+				<div class="col-md-4 col-sm-4 col-xs-12 form-group">
+					<label class="control-label" for="avaliador">Avaliador</label> 
+					<input type="text" id="avaliador" class="form-control" readonly="readonly" value="${avaliacao?.avaliador?.nome}">
+				</div>
+			
+				<div class="col-md-4 col-sm-4 col-xs-12 form-group">
+					<label class="control-label" for="totalPontos">Gols</label> 
+					<input type="text" id="totalPontos" class="form-control form-bg-${corGols}" value="${new java.text.DecimalFormat(' ###,##0.00', new DecimalFormatSymbols(new Locale ("pt", "BR"))).format(avaliacao?.totalPontos)}">
+				</div>
+			</div>
+			
+			<div class="form-group row">	
+				<g:if test="${!agenda}">
+					<div class="col-md-12 col-sm-12 col-xs-12 form-group">
+						<label class="control-label" for="observacao">Observações:</label> 
+						<textarea rows="3" id="observacao" maxlength="1500" class="form-control" readonly="readonly">${avaliacao?.observacao}</textarea>
+					</div>
+				</g:if>
+			</div>
+      
+		</form>
+    </div>
+	</div>
+</div>
+
+<div class="card">
+	<div class="card-block">
+		<div class="card-header">
+			<h5>Questões da ADI do Jogador</h5>
+		</div>
+
+		<div class="card-body">
+			<div class="table-responsive dt-responsive">
+				<table id="tableResultadoAdiJogador" class="table table-borderless nowrap">
+					<thead>
+						<tr class="table-color-blue">
+							<g:if test="${agenda}">
+								<th class="width-40" colspan="2">Tarefa</th>
+								<th class="width-10 text-center">Tipo</th>
+								<th class="width-10 text-center">Data</th>
+								<th class="width-5 text-center">Evidência</th>
+							</g:if>
+							<g:else>
+								<th class="width-50">Questão</th>
+								<th class="width-10 text-center">Ordem</th>
+							</g:else>
+							<th class="text-center width-5">Resposta</th>
+							<th class="text-center width-5">Observação</th>
+							<th class="text-center width-10">Peso Não</th>
+							<th class="text-center width-10">Peso Sim</th>
+							<th class="text-center width-10">Gols</th>
+							<th class="width-0"></th>
+						</tr>
+					</thead>
+					<tbody>
+						<g:each status="i" var="item" in="${itens}">
+							<tr data-toggle="collapse" data-target="#procedimento${i}" class="${(i % 2) == 0 ? 'even-pointer-blue' : 'odd-pointer-white'} accordion-toggle" >
+								<g:if test="${agenda}">
+									<td class="v-middle text-center width-5">
+										<i class="ti-angle-right" data-toggle="tooltip" title="Visualizar procedimento"></i>
+									</td>
+									<td class="space pl-0">
+										${item.avaliacao}
+									</td>
+									<td class="text-center">
+										${item.tipoEvidenciaNome}
+									</td>
+									<td class="text-center space">
+										${item.horaInicio.format('dd/MM/yyyy HH:mm:ss')}
+									</td>
+									<td class="text-center">
+
+										<g:if test="${item?.pontuacao > 0 && item?.necessitaEvidenciar && item?.tipoEvidencia==1}">
+											<a href="javascript: verEvidenciasFoto(${ item.idAgenda }, '${ bucket }')">
+												<i class="ti-eye color-icon-green icon-small" data-toggle="tooltip" title="Visualizar"></i>
+											</a>
+											&nbsp;&nbsp;
+											<g:link action="download" id="${item.idAgenda}" target="_blank">
+												<i class="ti-download color-icon-blue icon-small color-icon-blue icon-small" data-toggle="tooltip" title="Download"></i>
+											</g:link>
+										</g:if>
+
+										<g:elseif test="${item.qtdEvidencias > 0 && item?.necessitaEvidenciar && item?.tipoEvidencia!=1}">
+											<a href="javascript: verEvidencias(${ item.idAgenda }, '${ bucket }')">
+												<i class="ti-eye color-icon-green icon-small" data-toggle="tooltip" title="Visualizar"></i>
+											</a>
+											&nbsp;&nbsp;
+											<g:link action="download" id="${item.idAgenda}" target="_blank">
+												<i class="ti-download color-icon-blue icon-small" data-toggle="tooltip" title="Download"></i>
+											</g:link>
+										</g:elseif>
+
+										<g:elseif test="${item?.tipoEvidencia==7 && item?.necessitaEvidenciar && item.textoEvidencia}">
+											<a href="javascript: verTextoEvidencia(${item.id}, '${item?.avaliacao}','${item.textoEvidencia}')">
+												<i id="imgText" class="ti-align-left" data-toggle="tooltip" title="Ver Texto Evidencia"></i>
+											</a>
+										</g:elseif>
+
+										<g:else>
+											-
+										</g:else>	
+
+									</td>
+								</g:if>
+								<g:else>
+									<td class="space">
+										${item.avaliacao}
+									</td>
+									<td class="text-center">
+										${item.ordem}
+									</td>
+								</g:else>
+								<td class="text-center">
+									<g:if test="${item.resposta == 'S'}">
+										<input class="flat-green" type="radio" checked="checked" id="sim" data-toggle="tooltip" title="Sim">
+									</g:if>
+									<g:elseif test="${item.resposta == 'N' && item.situacao == 'C'}">
+										<input class="flat-red" type="radio" checked="checked" id="nao" data-toggle="tooltip" title="Não">
+									</g:elseif>
+									<g:elseif test="${item.resposta == 'I'}">
+										<input class="flat-yellow" type="radio" checked="checked" id="na" data-toggle="tooltip" title="Não Aplicável">
+									</g:elseif>
+									<g:elseif test="${item.resposta == 'N' && item.situacao == 'R'}">
+										<input class="flat-black" type="radio" checked="checked" id="rec" data-toggle="tooltip" title="Não Conforme">
+									</g:elseif>
+								</td>
+								<td class="text-center">
+									<g:if test="${item.obsNao}">
+										<a href="javascript: justificar(${item.id}, '${item.avaliacao}')">
+											<i id="imgObs" class="ti-comment-alt" data-toggle="tooltip" title="Justificar"></i>
+										</a>
+									</g:if>
+									<g:else>
+										<a>
+											<i id="imgObs" class="ti-comment" data-toggle="tooltip" title="Justificar"></i>
+										</a>
+									</g:else>
+								</td>
+								<td class="text-center">
+									<label class="badge badge-md badge-inverse-danger w-40">
+										${item.pesoNao}
+									</label>
+								</td>
+								<td class="text-center">
+									<label class="badge badge-md badge-inverse-success w-40">
+										${item.pesoSim}
+									</label>
+								</td>
+								<td class="text-center">
+									<label class="badge badge-md badge-inverse-info w-40">
+										${item.pontuacao}
+									</label>
+								</td>
+								<td>
+									<input type="hidden" value="${item.id}" id="id">
+									<input type="hidden" value="${item.obsNao}" id="obsNao">
+								</td>
+							</tr>
+							<g:if test="${agenda}">
+								<tr>
+									<td colspan="8" class="p-0">
+										<div class="accordian-body collapse" id="procedimento${i}">
+											<pre class="procedimento p-12 m-l-20"><b>Procedimento:</b><br>${item.procedimento ?: "Sem procedimento especificado."}</pre>
+											<h4 class="sub-title m-l-20 m-r-20"></h4>
+										</div>
+									</td>
+								</tr>
+							</g:if>
+						</g:each>
+					</tbody>
+					<tFoot>
+						<tr>
+							<td>
+								<b>Totais</b>
+							</td>
+							<td colspan="${agenda ? 6 : 3}"></td>
+							<td class="text-center">
+								<b>${itens.sum{it.pesoNao}}</b>
+							</td>
+							<td class="text-center">
+								<b>${itens.sum{it.pesoSim}}</b>
+							</td>
+							<td class="text-center">
+								<b>${itens.sum{it.pontuacao}}</b>
+							</td>
+						</tr>
+					</tFoot>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="form-group" align="center">
+	<div class="col-md-12 col-sm-12 col-xs-12">
+		<button type="button" class="btn btn-mat btn-primary mb3" onclick="javascript: cancelar();">Voltar</button>
+	</div>
+</div>
+
+<form id="formJustificar">
+	<div id="modalJustificar" class="modal fade" tabindex="-1" role="dialog">
+		<div class="modal-dialog">
+	    	<div class="modal-content">
+	      		<div class="modal-header">
+			        <h5 class="modal-title">
+			        	<i class="ti-comment-alt color"></i>
+	        			&nbsp;&nbsp;
+	        			<span id="jus_questao" class="pl-1"></span>
+			        </h5>
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			        	<span aria-hidden="true">&times;</span>
+			        </button>
+	      		</div>
+	      		<div class="modal-body">
+	        		<div class="row">
+	        			<input type="hidden" id="jus_id">
+						<div class="col-md-12 col-sm-12 col-xs-12 form-group">
+							<label class="control-label">Justificativa</label>
+							<textarea disabled="disabled" class="form-control" rows="4" cols="" id="jus_obs" maxlength="500" class="form-control"></textarea>
+						</div>
+					</div>
+	      		</div>
+	      		<div class="modal-footer">
+	        		<button type="reset" class="btn btn-mat btn-primary" data-dismiss="modal">
+                		<i class="feather icon-rotate-ccw"></i>
+                		Voltar
+                	</button>
+	      		</div>
+	    	</div>
+	  	</div>
+	</div>
+</form>
+
+<form id="formVisualizarEvidencias">
+	<div id="modalVisualizarEvidencias" class="modal fade" tabindex="-1" role="dialog">
+	  	<div class="modal-dialog modal-lg">
+	    	<div class="modal-content">
+	      		<div class="modal-header">
+	        		<h5 class="modal-title">
+	        			<i class="feather icon-upload-cloud"></i>
+	        			&nbsp;&nbsp;
+	        			Evidências
+	        		</h5>
+	        		<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	        			<span aria-hidden="true">&times;</span>
+	        		</button>
+	      		</div>
+	      		<div class="modal-body">
+	        		<div class="row">
+						<div class="col-md-12 col-sm-12 col-xs-12 form-group">
+							<table id="table_evidencias" class="table table-striped-blue table-borderless nowrap">
+								<thead>
+									<tr class="table-color-blue">
+										<th class="width-55">Nome</th>
+										<th class="width-15 text-center">Data upload</th>
+										<th class="width-15 text-center">Tamanho</th>
+										<th class="width-15 text-center">Ações</th>
+									</tr>
+								</thead>
+								<tbody>
+								<!-- Preenchido por uma function no JS -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+	      		</div>
+	      		<div class="modal-footer">
+				 	<button type="button" class="btn btn-mat btn-primary" data-dismiss="modal">
+				 		<i class="feather icon-rotate-ccw"></i>
+				 		Voltar
+				 	</button>
+		    	</div>
+	    	</div>
+	  	</div>
+	</div>
+</form>
+
+<form id="formVisualizarEvidencias">
+	<div id="modalVisualizarEvidenciasFoto" class="modal fade" tabindex="-1" role="dialog">
+	  	<div class="modal-dialog modal-lg">
+	    	<div class="modal-content">
+	      		<div class="modal-header">
+	        		<h5 class="modal-title">
+	        			<i class="feather icon-upload-cloud"></i>
+	        			&nbsp;&nbsp;
+	        			Evidências
+	        		</h5>
+	        		<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	        			<span aria-hidden="true">&times;</span>
+	        		</button>
+	      		</div>
+	      		<div class="modal-body background-black">
+					<div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+						<!-- Indicators -->
+						<ol class="carousel-indicators" id="indicators">
+							<!-- preenchido por uma function no JS-->
+						</ol>
+
+						<!-- Wrapper for slides -->
+						<div class="carousel-inner" role="listbox" id="wrapperSlides">
+							<!-- preenchido por uma function no JS-->
+						</div>
+
+						<!-- Controls -->
+						<a class="carousel-control-prev" href="#carousel-example-generic" role="button" data-slide="prev">
+							<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+							<span class="sr-only">Previous</span>
+						</a>
+						<a class="carousel-control-next" href="#carousel-example-generic" role="button" data-slide="next">
+							<span class="carousel-control-next-icon" aria-hidden="true"></span>
+							<span class="sr-only">Next</span>
+						</a>
+					</div>
+				</div>
+	      		<div class="modal-footer">
+				 	<button type="button" class="btn btn-mat btn-primary" data-dismiss="modal">
+				 		<i class="feather icon-rotate-ccw"></i>
+				 		Voltar
+				 	</button>
+		    	</div>		    	
+	    	</div>
+	  	</div>
+	</div>
+</form>
+
+
+<input type="hidden" id="redCheck" name="postId" value="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAADHklEQVR4nO2aS2sUQRDH55ToQTFgoje9KeIpnvSmiK5skp3/fxmQeMgnMAS/hY+DoiBe/QjqkvgNRDybzePkC8WQo273iCO1Tl47szPbsz2PhDTUabur67dVXV3dPY5z2A5oC+r1sY7rNhT5UAEtDbQVuakA1RVyUwPL8pv0kb5Bo3HCqUILarVRBdxRwJIC/mgyMBEZo8hFRc6KLqdwgLm5I5q8p8mvpsb3FeCLBhZEdyEQvuve0uS6NYAo0JpP3sw3jMgnuQFEgV4GnnfULsT09ClNfigMguEaIt8HwIQViN+Nxllxd9EQesczq2LDcJ7wvHFJo6VBcFvWA887PUxmKjycdFKYZUnRinxetvG6FwZ4miXFBlUUv9m8MVhI1Wqjmlwp22DdT4C1gTbNcMcu32Amwsyne0NKhbINZap8Tlz4UgAaK3XdywqYVOR307EyRsbqZvOK8VjgdhLI2wwKJ2Vsx/MumMBIXxnTDWfXvZRh3lZ8WNXrY5lK8V0GDQqTZYyO6vCDWu14BKRDulljVpE/FHAxNOycIr8N1Jc8n9RXp4jvulNxYfUoq8JB/2UbntB7w+tBHEhrGKVpnrHpCb0lwKsIiFSZQyvu86/b9oTeAWlHPUJuWFEeA5MLBLvz/IwLLWVrgt5QshpO3DNHp3iQlGxmD4QHJLS0pYq34MW+nH/67VkTJpumHib9yjWmbU9k6aNN5gTu51eipGQnm57x40oUuVDeV0UjoGOLxnCdLO2bMp58EwsRrpNZY/eSV+VglPVgJWN94JrVg1Wwn466njfSF6TrZmChAoYGiQLcTYTY5ZV2hSFWB75xlPeJ0g1mVBT51yevOyZNkc8qBwI8NoLYCjG5OK4QxLvUBd4XZmrqZEXWy7o8NjkWHnqsHIMzysov8sxQENueASbKCDP1P5zGrUD0PoZK5igEBHiR69u7vE/kGmpA2zjFZm3hpjkvpYJFiE+yY5fzBYTnjUjxFn5f4huvAdKXKlZ0ZE6ttpucDTrktFxjKvJ19wMacmPXRzVyufFRjqdyspNDUTAzc8y6IYfNqUb7B5wH4TdHQIraAAAAAElFTkSuQmCC" />
+
+
+<form id="formVisualizarTextoQuestao">
+	<div id="modalVisualizarTextoQuestao" class="modal fade" tabindex="-1" role="dialog">
+	  	<div class="modal-dialog modal-lg">
+	    	<div class="modal-content">
+	      		<div class="modal-header">
+	        		<h5 class="modal-title">
+	        			<i class="feather icon-edit"></i>
+	        			&nbsp;&nbsp;
+	        			<span id="jus_questao_texto" class="pl-1"></span>
+	        		</h5>
+	        		<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	        			<span aria-hidden="true">&times;</span>
+	        		</button>
+	      		</div>
+	      		<div class="modal-body">
+			        <div class="row">
+			        	<input type="hidden" id="jus_id">
+						<div class="col-md-12 col-sm-12 col-xs-12 form-group">
+							<label class="control-label">Texto Evidência</label>
+							<textarea rows="5" cols="" readonly="readonly" id="jus_texto" maxlength="1500" class="form-control"></textarea>
+						</div>
+					</div>
+		      	</div>
+	      		<div class="modal-footer">
+				 	<button type="button" class="btn btn-mat btn-primary" data-dismiss="modal">
+				 		<i class="feather icon-rotate-ccw"></i>
+				 		Voltar
+				 	</button>
+			    </div>
+	    	</div>
+	  	</div>
+	</div>
+</form>
+
+<input type="hidden" value="${itens}" id="oi">
+
+<script>
+
+	var dadosJson = JSON.parse(document.getElementById('oi').value);
+
+	gravarPdf(dadosJson);
+
+	/*
+	console.log( "oiJson ", oiJson.length );
+	for (i = 0; i < oiJson.length; i++) {
+		var obj = oiJson[i];
+		console.log("abc "+ obj.id+ " | " + obj.avaliacao + " | " + obj.ordem + " | " + obj.pontuacao);
+	} */
+
+	
+
+</script>
+
+<script type="text/javascript">
+	$('.flat-green').iCheck({
+		radioClass: 'iradio_square-green'
+	});
+	
+	$('.flat-red').iCheck({
+	    radioClass: 'iradio_square-red'
+	});
+	
+	$('.flat-yellow').iCheck({
+	    radioClass: 'iradio_square-yellow'
+	});
+
+	$('.flat-black').iCheck({
+		radioClass: 'iradio_square'
+	});
+
+	$('tr[data-toggle="collapse"]').click(function() {
+        var icon = $(this).find('.ti-angle-right');
+        if (icon.length > 0) {
+            if (icon.hasClass('ti-angle-down')) {
+                icon.removeClass('ti-angle-down').addClass('ti-angle-right');
+            } else {
+                icon.removeClass('ti-angle-right').addClass('ti-angle-down');
+            }
+        } else {
+            icon = $(this).find('.ti-angle-down');
+            if (icon.length > 0) {
+                icon.removeClass('ti-angle-down').addClass('ti-angle-right');
+            }
+        }
+    });
+
+    $('tbody a:not(.exclude-accordion)').click(function(event) {
+        event.stopPropagation();
+    });
+    
+    
+</script>
